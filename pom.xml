@@ -15,6 +15,7 @@
         <module>currency-rate-cbr</module>
         <module>currency-rate-rest-client</module>
         <module>currency-rate-tools</module>
+        <module>currency-rate-telegram-bot</module>
     </modules>
 
     <name>Currency rate</name>
