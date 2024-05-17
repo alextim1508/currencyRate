@@ -4,12 +4,11 @@ import com.alextim.currencyrate.telegrambot.config.TelegramClientConfig;
 import com.alextim.currencyrate.telegrambot.model.GetUpdatesRequest;
 import com.alextim.currencyrate.telegrambot.model.GetUpdatesResponse;
 import com.alextim.currencyrate.telegrambot.model.SendMessageRequest;
-import com.alextim.currencyrate.telegrambot.services.TelegramException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alextim.currencyrate.tools.client.ReactiveCustomHttpClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 
 @Service
@@ -17,42 +16,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TelegramClientImpl implements TelegramClient {
 
-    private final HttpClient httpClientJdk;
-    private final ObjectMapper objectMapper;
+    private final ReactiveCustomHttpClient httpClient;
     private final TelegramClientConfig clientConfig;
 
     @Override
-    public GetUpdatesResponse getUpdates(GetUpdatesRequest request) {
-        try {
-            var params = objectMapper.writeValueAsString(request);
-            log.info("getUpdates params:{}", params);
-
-            var updatesAsString = httpClientJdk.performRequest(makeUrl("getUpdates"), params);
-            log.info("updatesAsString:{}", updatesAsString);
-
-            var updates = objectMapper.readValue(updatesAsString, GetUpdatesResponse.class);
-            log.info("updates:{}", updates);
-
-            return updates;
-        } catch (JsonProcessingException ex) {
-            log.error("request:{}", request, ex);
-            throw new TelegramException(ex);
-        }
+    public Mono<GetUpdatesResponse> getUpdates(GetUpdatesRequest request) {
+        return httpClient.performPostRequest(makeUrl("getUpdates"), request, GetUpdatesResponse.class);
     }
 
     @Override
-    public void sendMessage(SendMessageRequest request) {
-        try {
-            var params = objectMapper.writeValueAsString(request);
-            log.info("params:{}", params);
-
-            var responseAsString = httpClientJdk.performRequest(makeUrl("sendMessage"), params);
-            log.info("responseAsString:{}", responseAsString);
-
-        } catch (JsonProcessingException ex) {
-            log.error("request:{}", request, ex);
-            throw new TelegramException(ex);
-        }
+    public Mono<String> sendMessage(SendMessageRequest request) {
+        return httpClient.performPostRequest(makeUrl("sendMessage"), request, String.class);
     }
 
     private String makeUrl(String apiRequest) {

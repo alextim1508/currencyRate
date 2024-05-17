@@ -1,5 +1,6 @@
-package com.alextim.currencyrate.telegrambot.clients;
+package com.alextim.currencyrate.tools.client;
 
+import com.alextim.currencyrate.tools.exception.HttpClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +12,7 @@ import static java.net.http.HttpClient.newHttpClient;
 
 @Service
 @Slf4j
-public class HttpClientJdk implements HttpClient {
+public class JdkHttpClient implements CustomHttpClient {
 
     @Override
     public String performRequest(String url, String params) {

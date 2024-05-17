@@ -1,5 +1,7 @@
 package com.alextim.currencyrate.cbrrate.requester;
 
+import reactor.core.publisher.Mono;
+
 public interface CbrRequester {
-    String getRatesAsXml(String url);
+    Mono<String> getRatesAsXml(String url);
 }

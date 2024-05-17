@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehcache.Cache;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -26,24 +27,29 @@ public class CurrencyRateService {
     private final CbrConfig cbrConfig;
     private final Cache<LocalDate, CachedCurrencyRates> currencyRateCache;
 
-    public CurrencyRate getCurrencyRate(String currency, LocalDate date) {
+    public Mono<CurrencyRate> getCurrencyRate(String currency, LocalDate date) {
         log.info("getCurrencyRate. currency:{}, date:{}", currency, date);
-        List<CurrencyRate> rates;
 
-        var cachedCurrencyRates =  currencyRateCache.get(date);
+        CachedCurrencyRates cachedCurrencyRates = currencyRateCache.get(date);
+
         if (cachedCurrencyRates == null) {
+            String urlWithParams = String.format("%s?date_req=%s", cbrConfig.getUrl(), DATE_FORMATTER.format(date));
 
-            var urlWithParams = String.format("%s?date_req=%s", cbrConfig.getUrl(), DATE_FORMATTER.format(date));
+            return cbrRequester.getRatesAsXml(urlWithParams)
+                    .map(s -> {
+                        List<CurrencyRate> rates = currencyRateParser.parse(s);
 
-            var ratesAsXml = cbrRequester.getRatesAsXml(urlWithParams);
+                        currencyRateCache.put(date, new CachedCurrencyRates(rates));
 
-            rates = currencyRateParser.parse(ratesAsXml);
-
-            currencyRateCache.put(date, new CachedCurrencyRates(rates));
+                        return filter(currency, rates, date);
+                    });
         } else {
-            rates = cachedCurrencyRates.getCurrencyRates();
+            List<CurrencyRate> rates = cachedCurrencyRates.getCurrencyRates();
+            return Mono.just(filter(currency, rates, date));
         }
+    }
 
+    private static CurrencyRate filter(String currency, List<CurrencyRate> rates, LocalDate date) {
         return rates.stream().filter(rate -> currency.equals(rate.getCharCode()))
                 .findFirst()
                 .orElseThrow(() ->

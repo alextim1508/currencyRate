@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 import com.alextim.currencyrate.telegrambot.clients.CurrencyRateClient;
 import com.alextim.currencyrate.telegrambot.model.MessageTextProcessorResult;
 import com.alextim.currencyrate.telegrambot.services.DateTimeProvider;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Function;
 
 
 @Slf4j
@@ -26,13 +28,13 @@ public class MessageTextProcessorRate implements MessageTextProcessor {
     private final DateTimeProvider dateTimeProvider;
 
     @Override
-    public MessageTextProcessorResult process(String msgText) {
+    public Mono<MessageTextProcessorResult> process(String msgText) {
         log.info("msgText:{}", msgText);
 
         var textParts = msgText.split(" ");
 
         if (textParts.length < 1 || textParts.length > 3) {
-            return new MessageTextProcessorResult(null, Messages.EXPECTED_FORMAT_MESSAGE.getText());
+            return Mono.just(new MessageTextProcessorResult(null, Messages.EXPECTED_FORMAT_MESSAGE.getText()));
         }
 
         String rateType = null;
@@ -63,7 +65,7 @@ public class MessageTextProcessorRate implements MessageTextProcessor {
             } catch (Exception ex) {
                 log.error("parsing error, string:{}", dateAsString, ex);
 
-                return new MessageTextProcessorResult(null, Messages.DATA_FORMAT_MESSAGE.getText());
+                return Mono.just(new MessageTextProcessorResult(null, Messages.DATA_FORMAT_MESSAGE.getText()));
             }
         }
 
@@ -72,12 +74,9 @@ public class MessageTextProcessorRate implements MessageTextProcessor {
             throw new IllegalArgumentException("rateType:" + rateType + " or currency:" + currency + " is null");
         }
 
-        CurrencyRate rate = currencyRateClient.getCurrencyRate(
-                rateType.toUpperCase(),
-                currency.toUpperCase(),
-                date);
 
-        return new MessageTextProcessorResult(rate.getValue(), null);
+        return currencyRateClient.getCurrencyRate(rateType.toUpperCase(), currency.toUpperCase(), date)
+                .map(rate -> new MessageTextProcessorResult(rate.getValue(), null));
     }
 
     private LocalDate parseDate(String dateAsString) {

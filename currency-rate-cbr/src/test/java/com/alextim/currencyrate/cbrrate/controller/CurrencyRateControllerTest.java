@@ -84,7 +84,7 @@ class CurrencyRateControllerTest {
     }
 
     private void prepareCbrRequesterMock(String date) throws IOException, URISyntaxException {
-        var uri = ClassLoader.getSystemResource("cbr_response.xml").toURI();
+       /* var uri = ClassLoader.getSystemResource("cbr_response.xml").toURI();
         var ratesXml = Files.readString(Paths.get(uri), Charset.forName("Windows-1251"));
 
         if (date == null) {
@@ -93,6 +93,6 @@ class CurrencyRateControllerTest {
             var dateParam = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
             var cbrUrl =  String.format("%s?date_req=%s", cbrConfig.getUrl(), DATE_FORMATTER.format(dateParam));
             when(cbrRequester.getRatesAsXml(cbrUrl)).thenReturn(ratesXml);
-        }
+        }*/
     }
 }

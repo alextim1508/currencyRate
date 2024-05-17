@@ -1,6 +1,6 @@
-package com.alextim.currencyrate.telegrambot.clients;
+package com.alextim.currencyrate.tools.client;
 
-public interface HttpClient {
+public interface CustomHttpClient {
 
     String performRequest(String url, String params);
 
